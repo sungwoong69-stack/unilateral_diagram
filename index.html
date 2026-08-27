@@ -76,10 +76,10 @@
   #main { flex:1; position:relative; overflow:hidden; background: linear-gradient(#e3e7eb 1px, transparent 1px) 0 0/24px 24px, linear-gradient(90deg,#e3e7eb 1px, transparent 1px) 0 0/24px 24px, #f2f4f6; }
   #scrollArea { position:absolute; inset:0; overflow:auto; }
   #canvasInner { display:inline-block; padding:60px; transform-origin: top left; }
-  #emptyState { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:10px; color:#9aa4ad; text-align:center; padding:40px; }
-  #emptyState .icon { font-size:40px; opacity:.5; }
-  #emptyState h2 { font-size:16px; color:#7c8792; margin:0; }
-  #emptyState p { font-size:13px; margin:0; max-width:340px; line-height:1.6; }
+  #emptyState, #bonusEmptyState { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:10px; color:#9aa4ad; text-align:center; padding:40px; }
+  #emptyState .icon, #bonusEmptyState .icon { font-size:40px; opacity:.5; }
+  #emptyState h2, #bonusEmptyState h2 { font-size:16px; color:#7c8792; margin:0; }
+  #emptyState p, #bonusEmptyState p { font-size:13px; margin:0; max-width:340px; line-height:1.6; }
 
   #topbar { position:absolute; top:14px; left:14px; right:14px; z-index:5; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
   #topbar .pill { background:#fff; border:1px solid var(--line); border-radius:20px; padding:6px 10px; font-size:12px; box-shadow:0 1px 3px rgba(0,0,0,.08); display:flex; align-items:center; gap:6px; }
@@ -89,6 +89,36 @@
   #breadcrumb { display:flex; align-items:center; gap:4px; flex-wrap:wrap; font-size:12px; color:var(--sub); }
   #breadcrumb .crumb { color:var(--accent2); cursor:pointer; text-decoration:underline; }
   #breadcrumb .sep { color:#bbb; }
+
+  /* -------- Tabs -------- */
+  #tabBar { display:flex; gap:6px; margin-bottom:2px; }
+  #tabBar button { flex:1; background:#fff; color:var(--sub); border:1px solid var(--line); padding:9px 6px; font-size:12.5px; border-radius:7px; }
+  #tabBar button.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+  #sidebarTree { display:flex; flex-direction:column; gap:16px; }
+  #sidebarBonus { display:none; flex-direction:column; gap:16px; }
+  #mainTree { display:block; position:absolute; inset:0; }
+  #mainBonus { display:none; position:absolute; inset:0; }
+
+  /* -------- Bonus tab -------- */
+  .bonus-field { display:flex; flex-direction:column; gap:6px; }
+  .bonus-note { font-size:11px; color:var(--sub); line-height:1.5; background:#fff; border:1px solid var(--line); border-radius:7px; padding:9px 10px; }
+  #bonusResultsWrap { position:absolute; inset:0; overflow:auto; padding:28px 34px; }
+  .bonus-card { background:#fff; border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin-bottom:16px; max-width:920px; }
+  .bonus-card h3 { margin:0 0 12px 0; font-size:15px; color:var(--accent); }
+  .bonus-card .amount { font-size:22px; font-weight:800; color:var(--accent); }
+  .bonus-total-card { background:var(--accent); color:#fff; border-radius:10px; padding:20px 24px; margin-bottom:18px; max-width:920px; }
+  .bonus-total-card .label { font-size:13px; opacity:.85; }
+  .bonus-total-card .amount { font-size:30px; font-weight:800; color:#fff; }
+  table.bonus-table { width:100%; border-collapse:collapse; font-size:12.5px; margin-top:8px; }
+  table.bonus-table th, table.bonus-table td { border:1px solid var(--line); padding:6px 9px; text-align:right; }
+  table.bonus-table th { background:#f2f4f6; text-align:center; font-weight:700; }
+  table.bonus-table td.left { text-align:left; }
+  table.bonus-table td.center { text-align:center; }
+  .qual-badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700; }
+  .qual-yes { background:#eaf7ec; color:#1e7a34; }
+  .qual-no { background:#fdeceb; color:#b3271f; }
+  .bonus-header-row { display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .disclaimer-box { background:#fff8e6; border:1px solid #f0dca0; border-radius:8px; padding:12px 14px; font-size:11.5px; color:#7a5c00; line-height:1.6; max-width:920px; margin-bottom:16px; }
 
   svg text { font-family:-apple-system,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif; }
   .box-click { cursor:pointer; }
@@ -107,6 +137,11 @@
       <p class="lead">다운라인 데이터 파일과 최상위 회원번호만 입력하면, 후원인(스폰서) 관계를 따라 박스형 계보도를 자동으로 그려줍니다.</p>
     </div>
 
+    <div id="tabBar">
+      <button id="tabTreeBtn" class="active">🌳 계보도</button>
+      <button id="tabBonusBtn">💰 보너스 예측</button>
+    </div>
+
     <div class="section">
       <div class="section-title">1. 데이터</div>
       <div class="field">
@@ -114,6 +149,13 @@
         <input type="file" id="fileInput" accept=".xlsx,.xls">
         <div class="filebox" id="fileBox">파일을 선택해주세요. 회원번호·회원명·후원인회원번호·활동상태·직급·PPV·DPV·메인레그DPV 열이 포함되어 있어야 합니다.</div>
       </div>
+    </div>
+
+    <hr class="sep">
+
+    <div id="sidebarTree">
+    <div class="section">
+      <div class="section-title">2. 최상위 회원</div>
       <div class="field">
         <label for="rootInput">최상위 회원번호</label>
         <input type="text" id="rootInput" placeholder="예: 3535277  (쉼표로 여러 명 비교 가능)">
@@ -196,24 +238,63 @@
         <div class="hint" style="margin-top:4px;">박스를 클릭하면 그 사람을 최상위로 다시 그립니다. 선 위의 동그라미(●)를 클릭하면 하위 조직을 접거나 펼칩니다.</div>
       </div>
     </div>
+    </div>
+
+    <div id="sidebarBonus">
+      <div class="section">
+        <div class="section-title">2. 계산 대상</div>
+        <div class="bonus-field">
+          <label for="bonusMemberInput">회원번호</label>
+          <input type="text" id="bonusMemberInput" placeholder="예: 3535277">
+          <div class="hint">이 회원을 기준으로 유니레벨/멘토/비즈니스 개발 보너스를 예측합니다.</div>
+        </div>
+        <div class="bonus-field">
+          <label for="bonusRankSelect">직급 (시뮬레이션)</label>
+          <select id="bonusRankSelect"></select>
+          <div class="hint">기본값은 이번 달 실제 달성가능직급입니다. 다른 직급을 선택하면 "만약 이 직급이라면?" 예상치를 볼 수 있습니다.</div>
+        </div>
+        <button id="bonusCalcBtn" disabled>보너스 예측하기</button>
+        <div id="bonusStatus"></div>
+      </div>
+      <hr class="sep">
+      <div class="section">
+        <div class="section-title">CV 환산 기준</div>
+        <div class="bonus-note">CV = PPV × 1,550 × 0.7 ÷ 1.1<br>(사용자 제공 환산식)</div>
+      </div>
+      <hr class="sep">
+      <div class="section">
+        <div class="section-title">참고</div>
+        <div class="bonus-note">이 예측은 업로드하신 다운라인 파일의 이번 달 스냅샷 기준입니다. 전월 대비 변동, 회사 전체 매출(글로벌 풀), 팩 주문 이력 등은 반영되지 않습니다. 자세한 내용은 계산 결과 하단의 "가정 및 한계"를 확인하세요.</div>
+      </div>
+    </div>
   </aside>
 
   <main id="main">
-    <div id="emptyState">
-      <div class="icon">🗂️</div>
-      <h2>파일과 최상위 회원번호를 입력하세요</h2>
-      <p>왼쪽에서 다운라인 데이터 파일(.xlsx)을 올리고 최상위 회원번호를 입력한 뒤 "조직도 생성" 버튼을 누르면 여기에 계보도가 그려집니다.</p>
-    </div>
-    <div id="topbar" style="display:none;">
-      <div class="pill" id="breadcrumbWrap"><span id="breadcrumb"></span></div>
-      <button id="backBtn" disabled>◀ 뒤로</button>
-      <button id="homeBtn" disabled>처음으로</button>
-      <button id="topFit">화면에 맞추기</button>
-    </div>
-    <div id="scrollArea" style="display:none;">
-      <div id="canvasInner">
-        <svg id="chart" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div id="mainTree">
+      <div id="emptyState">
+        <div class="icon">🗂️</div>
+        <h2>파일과 최상위 회원번호를 입력하세요</h2>
+        <p>왼쪽에서 다운라인 데이터 파일(.xlsx)을 올리고 최상위 회원번호를 입력한 뒤 "조직도 생성" 버튼을 누르면 여기에 계보도가 그려집니다.</p>
       </div>
+      <div id="topbar" style="display:none;">
+        <div class="pill" id="breadcrumbWrap"><span id="breadcrumb"></span></div>
+        <button id="backBtn" disabled>◀ 뒤로</button>
+        <button id="homeBtn" disabled>처음으로</button>
+        <button id="topFit">화면에 맞추기</button>
+      </div>
+      <div id="scrollArea" style="display:none;">
+        <div id="canvasInner">
+          <svg id="chart" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+      </div>
+    </div>
+    <div id="mainBonus">
+      <div id="bonusEmptyState">
+        <div class="icon">💰</div>
+        <h2>회원번호를 입력하고 예측해보세요</h2>
+        <p>왼쪽에서 회원번호를 입력하고 "보너스 예측하기"를 누르면 여기에 예상 보너스가 표시됩니다.</p>
+      </div>
+      <div id="bonusResultsWrap" style="display:none;"></div>
     </div>
   </main>
 </div>
@@ -273,6 +354,30 @@
   const hideWithdrawnChk = document.getElementById('hideWithdrawnChk');
   const rankFilterBox = document.getElementById('rankFilterBox');
   const statsPanel = document.getElementById('statsPanel');
+  const tabTreeBtn = document.getElementById('tabTreeBtn');
+  const tabBonusBtn = document.getElementById('tabBonusBtn');
+  const sidebarTree = document.getElementById('sidebarTree');
+  const sidebarBonus = document.getElementById('sidebarBonus');
+  const mainTree = document.getElementById('mainTree');
+  const mainBonus = document.getElementById('mainBonus');
+  const bonusMemberInput = document.getElementById('bonusMemberInput');
+  const bonusRankSelect = document.getElementById('bonusRankSelect');
+  const bonusCalcBtn = document.getElementById('bonusCalcBtn');
+  const bonusStatusEl = document.getElementById('bonusStatus');
+  const bonusEmptyState = document.getElementById('bonusEmptyState');
+  const bonusResultsWrap = document.getElementById('bonusResultsWrap');
+
+  tabTreeBtn.addEventListener('click', function(){
+    tabTreeBtn.classList.add('active'); tabBonusBtn.classList.remove('active');
+    sidebarTree.style.display = 'flex'; sidebarBonus.style.display = 'none';
+    mainTree.style.display = 'block'; mainBonus.style.display = 'none';
+  });
+  tabBonusBtn.addEventListener('click', function(){
+    tabBonusBtn.classList.add('active'); tabTreeBtn.classList.remove('active');
+    sidebarBonus.style.display = 'flex'; sidebarTree.style.display = 'none';
+    mainBonus.style.display = 'block'; mainTree.style.display = 'none';
+    if (!bonusMemberInput.value && currentRoots.length) bonusMemberInput.value = currentRoots[0];
+  });
 
   function setStatus(msg, kind){ statusEl.textContent = msg; statusEl.className = 'show ' + (kind||'info'); }
   function clearStatus(){ statusEl.className = ''; statusEl.textContent = ''; }
@@ -283,6 +388,12 @@
     memno:['회원번호'], name:['회원명'], sponsor:['후원인회원번호'], referName:['추천인이름'],
     status:['활동상태'], rank:['직급'], ppv:['PPV'], dpv:['DPV'], mainDpv:['메인레그DPV']
   };
+  // optional fields used only by the 보너스 예측 tab; missing ones just disable related sub-features
+  const OPTIONAL_FIELD_ALIASES = {
+    referNo:['추천인회원번호'], activeLegs:['액티브레그수'], leaderLegPts:['리더레그포인트'],
+    achievableRank:['달성가능직급'], qualifiedRank:['유자격직급'],
+    careerHighRank:['최고직급'], careerHighMonth:['최고직급달성월'], perfMonth:['실적월']
+  };
   function detectColumns(header){
     const normed = header.map(norm); const map = {};
     for (const field in FIELD_ALIASES){
@@ -290,8 +401,14 @@
       for (const alias of FIELD_ALIASES[field]){ idx = normed.findIndex(h => h === norm(alias)); if (idx !== -1) break; }
       map[field] = idx;
     }
+    for (const field in OPTIONAL_FIELD_ALIASES){
+      let idx = -1;
+      for (const alias of OPTIONAL_FIELD_ALIASES[field]){ idx = normed.findIndex(h => h === norm(alias)); if (idx !== -1) break; }
+      map[field] = idx; // -1 if not found; consumers must check
+    }
     return map;
   }
+  function hasCol(field){ return colMap && colMap[field] !== -1 && colMap[field] != null; }
 
   fileInput.addEventListener('change', function(){
     const f = fileInput.files[0];
@@ -317,6 +434,8 @@
         }
         const dataRows = rows.slice(1).filter(r => r && r[map.memno] !== '' && r[map.memno] != null);
 
+        colMap = map; headerRow = header;
+
         allNodes = {}; rawRowsByMemno = {};
         for (const r of dataRows){
           const memno = String(r[map.memno]).trim();
@@ -324,17 +443,26 @@
           allNodes[memno] = {
             memno, name:r[map.name], sponsor:String(r[map.sponsor]).trim(), refer:r[map.referName],
             status:r[map.status], rank:r[map.rank], ppv:Number(r[map.ppv])||0, dpv:Number(r[map.dpv])||0,
-            mainDpv:Number(r[map.mainDpv])||0, children:[]
+            mainDpv:Number(r[map.mainDpv])||0, children:[], referrals:[],
+            referNo: hasCol('referNo') ? String(r[map.referNo]).trim() : '',
+            activeLegs: hasCol('activeLegs') ? Number(r[map.activeLegs])||0 : null,
+            leaderLegPts: hasCol('leaderLegPts') ? Number(r[map.leaderLegPts])||0 : null,
+            achievableRank: hasCol('achievableRank') ? r[map.achievableRank] : null,
+            qualifiedRank: hasCol('qualifiedRank') ? r[map.qualifiedRank] : null,
+            careerHighRank: hasCol('careerHighRank') ? r[map.careerHighRank] : null,
+            careerHighMonth: hasCol('careerHighMonth') ? r[map.careerHighMonth] : null,
+            perfMonth: hasCol('perfMonth') ? String(r[map.perfMonth]).trim() : null
           };
           rawRowsByMemno[memno] = r;
         }
         for (const memno in allNodes){
           const n = allNodes[memno];
           if (n.sponsor && allNodes[n.sponsor] && n.sponsor !== memno) allNodes[n.sponsor].children.push(n);
+          if (n.referNo && allNodes[n.referNo] && n.referNo !== memno) allNodes[n.referNo].referrals.push(n);
         }
 
-        colMap = map; headerRow = header;
         buildRankFilterUI();
+        initBonusTab();
         fileBox.textContent = '✓ ' + f.name + ' (' + dataRows.length + '명 데이터 확인됨)';
         fileBox.classList.add('has-file');
         setStatus('파일을 불러왔습니다. 최상위 회원번호를 입력하세요.', 'ok');
@@ -915,6 +1043,415 @@
     } finally {
       downloadXlsxBtn.disabled = false;
     }
+  });
+
+  // ================= 보너스 예측 (BONUS PREDICTION) =================
+  // ---- reference tables from 2026 매나테크 코리아 보상플랜 PDF ----
+  // Rank strings in real export data may render the "star" ranks differently (•, ★, *, or plain digit+PPD).
+  // Normalize before any lookup/comparison so the tables match regardless of which glyph the file uses.
+  function normRank(s){ return String(s==null?'':s).replace(/[•★*\-\s]/g,'').toUpperCase(); }
+
+  const RANK_ORDER = ['A','SA','GA','D','SD','GD','ED','SED','GED','PD','BPD','SPD','GPD','PPD','1★PPD','2★PPD','3★PPD','4★PPD','CPA'];
+  const RANK_LOOKUP = {}; // normalized -> display label
+  RANK_ORDER.forEach(r => { RANK_LOOKUP[normRank(r)] = r; });
+  function toDisplayRank(rawRank){
+    const norm = normRank(rawRank);
+    return RANK_LOOKUP[norm] || rawRank; // fall back to raw value if we don't recognize it
+  }
+  const RANK_REQ = {
+    SA:{dpv:350,   legCond:2, maxLegPct:0.60},
+    GA:{dpv:750,   legCond:2, maxLegPct:0.60},
+    D: {dpv:1500,  legCond:2, maxLegPct:0.60},
+    SD:{dpv:2500,  legCond:2, maxLegPct:0.60},
+    GD:{dpv:4000,  legCond:2, maxLegPct:0.60},
+    ED:{dpv:6000,  legCond:2, maxLegPct:0.60},
+    SED:{dpv:10000,    legCond:2, maxLegPct:0.65},
+    GED:{dpv:20000,    legCond:3, maxLegPct:0.65, orgPts:null},
+    PD: {dpv:40000,    legCond:3, maxLegPct:0.65, orgPts:null},
+    BPD:{dpv:80000,    legCond:3, maxLegPct:0.65, orgPts:1,  orgText:'1인 & 1포인트'},
+    SPD:{dpv:160000,   legCond:3, maxLegPct:0.65, orgPts:2,  orgText:'GED 2명 & 2포인트'},
+    GPD:{dpv:240000,   legCond:4, maxLegPct:0.65, orgPts:3,  orgText:'GED 3명 & 3포인트'},
+    PPD:{dpv:320000,   legCond:4, maxLegPct:0.65, orgPts:4,  orgText:'GED 4명 & 4포인트'},
+    '1★PPD':{dpv:640000,   legCond:4, maxLegPct:0.65, orgPts:6,  orgText:'PD 4명 & 6포인트'},
+    '2★PPD':{dpv:1250000,  legCond:4, maxLegPct:0.65, orgPts:8,  orgText:'PD 4명 & 8포인트'},
+    '3★PPD':{dpv:2500000,  legCond:4, maxLegPct:0.65, orgPts:10, orgText:'PD 4명 & 10포인트'},
+    '4★PPD':{dpv:5000000,  legCond:4, maxLegPct:0.65, orgPts:12, orgText:'PD 4명 & 12포인트'},
+    CPA:{dpv:10000000, legCond:5, maxLegPct:0.65, orgPts:15, orgText:'PD 5명 & 15포인트'}
+  };
+  const PPV_REQ_ALL = 150; // flat 150 PPV required for every paid rank per the plan tables
+
+  const UNILEVEL_PCT = {
+    SA:  [3,null,null,null,null,null,null],
+    GA:  [4,2,null,null,null,null,null],
+    D:   [5,3,2,null,null,null,null],
+    SD:  [6,4,4,3,null,null,null],
+    GD:  [7,6,6,4,null,null,null],
+    ED:  [8,8,8,6,5,null,null],
+    SED: [8,8,8,6,5,4,null],
+    GED: [8,8,8,6,6,4,null],
+    PD:  [8,8,8,6,6,5,4],
+    BPD: [8,8,8,6,6,5,4],
+    'SPD+': [8,8,8,6,6,5,4]
+  };
+  const SIDE_LEG_PCT_RANKS = new Set(['PD','BPD','SPD+']);
+  const HIGH_TIER = new Set(['SPD','GPD','PPD','1★PPD','2★PPD','3★PPD','4★PPD','CPA']);
+  function unilevelRow(rank){ return UNILEVEL_PCT[HIGH_TIER.has(rank) ? 'SPD+' : rank] || null; }
+
+  const MENTOR_TABLE = {
+    GA:30000, D:40000, SD:50000, GD:75000,
+    ED:100000, SED:100000, GED:100000, PD:100000, BPD:100000,
+    SPD:100000, GPD:100000, PPD:100000, '1★PPD':100000,'2★PPD':100000,'3★PPD':100000,'4★PPD':100000, CPA:100000
+  };
+
+  const RANKUP_BONUS = {
+    GED:{total:1000000, p1:500000, p2:500000, p3:0},
+    PD: {total:2000000, p1:1000000, p2:1000000, p3:0},
+    BPD:{total:3000000, p1:1500000, p2:1500000, p3:0},
+    SPD:{total:5000000, p1:2500000, p2:2500000, p3:0},
+    GPD:{total:10000000, p1:5000000, p2:5000000, p3:0},
+    PPD:{total:20000000, p1:10000000, p2:10000000, p3:0},
+    '1★PPD':{total:30000000, p1:15000000, p2:15000000, p3:0},
+    '2★PPD':{total:50000000, p1:25000000, p2:25000000, p3:0},
+    '3★PPD':{total:70000000, p1:35000000, p2:35000000, p3:0},
+    '4★PPD':{total:150000000, p1:50000000, p2:50000000, p3:50000000},
+    CPA:{total:500000000, p1:100000000, p2:100000000, p3:300000000}
+  };
+
+  function cvOf(ppv){ return (ppv||0) * 1550 * 0.7 / 1.1; }
+  function fmtWon(v){ return Math.round(v).toLocaleString('ko-KR') + '원'; }
+
+  function initBonusTab(){
+    bonusRankSelect.innerHTML = '';
+    RANK_ORDER.forEach(r => {
+      const opt = document.createElement('option'); opt.value = r; opt.textContent = r;
+      bonusRankSelect.appendChild(opt);
+    });
+    bonusCalcBtn.disabled = false;
+  }
+  bonusMemberInput.addEventListener('input', function(){
+    const n = allNodes[bonusMemberInput.value.trim()];
+    if (n && n.achievableRank){
+      const disp = toDisplayRank(n.achievableRank);
+      if (RANK_LOOKUP[normRank(disp)]) bonusRankSelect.value = disp;
+    }
+  });
+
+  function checkRankQualification(node, rankKey){
+    const req = RANK_REQ[rankKey];
+    if (!req) return null;
+    const ppvOk = node.ppv >= PPV_REQ_ALL;
+    const cap = req.dpv * req.maxLegPct;
+    const qualifyingDpv = Math.max(0, node.dpv - node.mainDpv) + Math.min(node.mainDpv, cap);
+    const dpvOk = qualifyingDpv >= req.dpv;
+    const legOk = node.activeLegs != null ? node.activeLegs >= req.legCond : null;
+    let orgOk = true;
+    if (req.orgPts != null){
+      orgOk = node.leaderLegPts != null ? node.leaderLegPts >= req.orgPts : null;
+    }
+    const allOk = ppvOk && dpvOk && (legOk !== false) && (orgOk !== false);
+    return {rankKey, req, ppvOk, dpvOk, legOk, orgOk, qualifyingDpv, cap, allOk};
+  }
+
+  // shared compression walk: returns flat list of {cv, level, legRoot, memno, dpv} for every downline node,
+  // where level 1 = root's direct children, and legRoot = which of root's direct children this node's leg belongs to.
+  function walkLevelItems(root){
+    const items = [];
+    function walk(n, effLevel, legRoot){
+      for (const c of n.children){
+        const childLegRoot = legRoot || c.memno;
+        items.push({cv: cvOf(c.ppv), level: effLevel, legRoot: childLegRoot, memno:c.memno, dpv:c.dpv});
+        const nextLevel = (c.ppv >= 150) ? effLevel+1 : effLevel;
+        walk(c, nextLevel, childLegRoot);
+      }
+    }
+    walk(root, 1, null);
+    return items;
+  }
+
+  function computeUnilevelBonus(root, viewerRank){
+    const row = unilevelRow(viewerRank);
+    if (!row) return {total:0, byLevel:[], eligible:false};
+    const items = walkLevelItems(root);
+    const byLevel = Array(7).fill(0);
+    items.forEach(it => { if (it.level >= 1 && it.level <= 7) byLevel[it.level-1] += it.cv; });
+    let total = 0;
+    const detail = byLevel.map((cv,i) => {
+      const pct = row[i];
+      const amt = pct ? cv * pct/100 : 0;
+      total += amt;
+      return {level:i+1, cv, pct, amt};
+    });
+    return {total, byLevel: detail, eligible:true};
+  }
+
+  // ---- 인피니트 보너스 (사용자 정의: PD 이상 달성자가, 메인레그를 제외한 나머지 레그의 8단계 이하 실적의 0.5%를 수령) ----
+  const PD_PLUS_ORDER_IDX = RANK_ORDER.indexOf('PD');
+  function isPdPlus(rank){
+    const idx = RANK_ORDER.indexOf(toDisplayRank(rank));
+    return idx !== -1 && idx >= PD_PLUS_ORDER_IDX;
+  }
+  function findMainLeg(root){
+    function subtreeDpvSum(n){ return (n.dpv||0) + n.children.reduce((s,c)=>s+subtreeDpvSum(c),0); }
+    let best = null, bestSum = -1;
+    root.children.forEach(c => {
+      const sum = subtreeDpvSum(c);
+      if (sum > bestSum){ bestSum = sum; best = c.memno; }
+    });
+    return {memno: best, dpvSum: bestSum};
+  }
+  function computeInfiniteBonus(root, viewerRank){
+    if (!isPdPlus(viewerRank)) return {eligible:false};
+    const mainLeg = findMainLeg(root);
+    const items = walkLevelItems(root);
+    const deepItems = items.filter(it => it.level >= 8 && it.legRoot !== mainLeg.memno);
+    const cvSum = deepItems.reduce((s,it)=>s+it.cv, 0);
+    const amount = cvSum * 0.005;
+    return {eligible:true, mainLegMemno: mainLeg.memno, mainLegName: allNodes[mainLeg.memno] ? allNodes[mainLeg.memno].name : '-', cvSum, amount, itemCount: deepItems.length};
+  }
+
+  function computeMentorBonus(referrer){
+    let total = 0; const detail = [];
+    for (const ref of referrer.referrals){
+      const downlineAmt = MENTOR_TABLE[toDisplayRank(ref.rank)];
+      if (!downlineAmt) continue;
+      const referrerAmt = MENTOR_TABLE[toDisplayRank(referrer.rank)] || 0;
+      const amt = Math.min(downlineAmt, referrerAmt);
+      if (amt > 0) { total += amt; detail.push({name:ref.name, memno:ref.memno, rank:ref.rank, amt}); }
+    }
+    return {total, detail, hasReferData: !!colMap && hasCol('referNo')};
+  }
+
+  function computeBizDevBonus(root){
+    if (!colMap || !hasCol('referNo')) return {available:false};
+    const qualifying = root.referrals.filter(r => r.ppv >= 500);
+    const selfOk = root.ppv >= 500;
+    return {
+      available: true, selfOk, qualifyingCount: qualifying.length,
+      biz1: selfOk && qualifying.length >= 2, biz2: selfOk && qualifying.length >= 4,
+      qualifyingNames: qualifying.map(r => r.name + '(' + r.memno + ')')
+    };
+  }
+
+  function computeRankupBonus(node){
+    if (!node.careerHighRank || !node.careerHighMonth || !node.perfMonth) return {available:false};
+    const justAchieved = String(node.careerHighMonth).replace(/[^0-9]/g,'') === String(node.perfMonth).replace(/[^0-9]/g,'');
+    const displayRank = toDisplayRank(node.careerHighRank);
+    const table = RANKUP_BONUS[displayRank];
+    return {available:true, justAchieved, rank:displayRank, table};
+  }
+
+  function computeGlobalPoolStatus(rank){
+    const displayRank = toDisplayRank(rank);
+    const eligible = new Set(['BPD','SPD','GPD','PPD','1★PPD','2★PPD','3★PPD','4★PPD','CPA']);
+    const qualifies = eligible.has(displayRank);
+    const amount = qualifies ? (GLOBAL_POOL_SHARE[displayRank] || 0) * GLOBAL_POOL_WON_PER_SHARE : 0;
+    return {qualifies, amount, displayRank};
+  }
+  // convenience conversion agreed with the user: BPD(지분 0.5) = 900,000원 -> 1 지분 = 1,800,000원, applied across the 지분 table
+  const GLOBAL_POOL_SHARE = {BPD:0.5, SPD:1, GPD:1.5, PPD:2, '1★PPD':2.5, '2★PPD':3, '3★PPD':3.5, '4★PPD':4, CPA:5};
+  const GLOBAL_POOL_WON_PER_SHARE = 1800000;
+
+  // ---- 리더십 체크 매치 (Leadership Check Match) ----
+  const LCM_RANK_COLS = ['SED','GED','PD','BPD','SPD','GPD','PPD','1★PPD','2★PPD','3★PPD','4★PPD','CPA'];
+  // row index = generation (1~6); value = {startCol, pct}. Eligible only if root's rank column index >= startCol.
+  const LCM_ROWS = { 1:{startCol:0, pct:20}, 2:{startCol:1, pct:20}, 3:{startCol:2, pct:10}, 4:{startCol:3, pct:10}, 5:{startCol:4, pct:2.5}, 6:{startCol:5, pct:2.5} };
+  const LCM_LEADER_CAP = {SED:250000, GED:500000, PD:750000, BPD:1000000, SPD:1500000, GPD:2000000, PPD:2500000, '1★PPD':3000000, '2★PPD':3500000, '3★PPD':4000000, '4★PPD':5000000, CPA:10000000};
+  const LCM_LEG_CAP = {SED:850000, ED:500000, GD:350000, SD:220000, D:130000, GED:1500000, PD:3500000, BPD:5000000, SPD:6500000, GPD:9600000, PPD:13000000, '1★PPD':20000000, '2★PPD':28000000, '3★PPD':40000000, '4★PPD':56000000, CPA:Infinity};
+  const LCM_SED_SET = new Set(LCM_RANK_COLS);
+
+  function collectSedPlusLeaders(root){
+    const leaders = [];
+    function walk(node, gen, legRoot){
+      for (const child of node.children){
+        const childLegRoot = legRoot || child.memno;
+        const disp = toDisplayRank(child.rank);
+        if (LCM_SED_SET.has(disp)){
+          const childGen = gen + 1;
+          if (childGen <= 6) leaders.push({node:child, rank:disp, gen:childGen, legRoot:childLegRoot});
+          walk(child, childGen, childLegRoot);
+        } else {
+          walk(child, gen, childLegRoot);
+        }
+      }
+    }
+    walk(root, 0, null);
+    return leaders;
+  }
+
+  function computeLeadershipCheckMatch(root, rootSimRank){
+    const rootColIdx = LCM_RANK_COLS.indexOf(rootSimRank);
+    if (rootColIdx === -1) return {eligible:false, total:0, byLeg:[]};
+    const leaders = collectSedPlusLeaders(root);
+    const perLeader = leaders.map(l => {
+      const row = LCM_ROWS[l.gen];
+      const pct = (rootColIdx >= row.startCol) ? row.pct : 0;
+      const uni = computeUnilevelBonus(l.node, l.rank);
+      const inf = computeInfiniteBonus(l.node, l.rank);
+      const base = (uni.eligible ? uni.total : 0) + (inf.eligible ? inf.amount : 0);
+      const raw = base * pct/100;
+      const capped = Math.min(raw, LCM_LEADER_CAP[l.rank] != null ? LCM_LEADER_CAP[l.rank] : Infinity);
+      return {name:l.node.name, memno:l.node.memno, rank:l.rank, gen:l.gen, pct, base, capped, legRoot:l.legRoot};
+    });
+    const legMap = {};
+    perLeader.forEach(p => { (legMap[p.legRoot] = legMap[p.legRoot]||[]).push(p); });
+    const legCap = LCM_LEG_CAP[rootSimRank] != null ? LCM_LEG_CAP[rootSimRank] : Infinity;
+    let total = 0;
+    const byLeg = Object.keys(legMap).map(legRoot => {
+      const items = legMap[legRoot];
+      const sum = items.reduce((s,p)=>s+p.capped, 0);
+      const cappedSum = Math.min(sum, legCap);
+      total += cappedSum;
+      const legNode = allNodes[legRoot];
+      return {legRoot, legName: legNode ? legNode.name : legRoot, sum, cappedSum, items};
+    });
+    return {eligible:true, total, byLeg, leaderCount:leaders.length};
+  }
+
+  function qualBadge(ok){
+    if (ok == null) return '<span class="qual-badge" style="background:#eee;color:#888;">확인불가</span>';
+    return ok ? '<span class="qual-badge qual-yes">충족</span>' : '<span class="qual-badge qual-no">미충족</span>';
+  }
+
+  function renderBonusResults(node, simRank){
+    const parts = [];
+
+    parts.push('<div class="disclaimer-box"><b>가정 및 한계:</b> 이 예측은 업로드된 파일의 이번 달 스냅샷 수치를 매나테크 보상플랜 규정에 대입한 추정치입니다. '
+      + '첫 팩주문 보너스(신규가입 이력 필요), 글로벌 풀 보너스의 정확한 금액(전세계 매출 필요), 리더십 체크 매치(다른 보너스 실지급액 및 세대 구조 기반의 고급 계산)는 '
+      + '이 파일만으로는 정확히 계산할 수 없어 이번 예측에 포함하지 않았습니다. 실제 지급액은 매나테크 시스템의 공식 정산과 다를 수 있습니다.</div>');
+
+    // ---- header : current status ----
+    parts.push('<div class="bonus-card"><div class="bonus-header-row"><h3>' + node.name + ' (' + node.memno + ') 현황</h3></div>'
+      + '<table class="bonus-table"><tr><th>현재 직급</th><th>달성가능직급(이번달)</th><th>유자격직급</th><th>PPV</th><th>DPV</th><th>메인레그DPV</th><th>액티브레그</th><th>리더레그포인트</th></tr>'
+      + '<tr><td class="center">' + (node.rank||'-') + '</td><td class="center">' + (node.achievableRank||'-') + '</td><td class="center">' + (node.qualifiedRank||'-') + '</td>'
+      + '<td>' + node.ppv.toLocaleString() + '</td><td>' + node.dpv.toLocaleString() + '</td><td>' + node.mainDpv.toLocaleString() + '</td>'
+      + '<td class="center">' + (node.activeLegs!=null?node.activeLegs:'-') + '</td><td class="center">' + (node.leaderLegPts!=null?node.leaderLegPts:'-') + '</td></tr></table></div>');
+
+    // ---- qualification checklist ----
+    let qualRows = '';
+    RANK_ORDER.filter(r => r !== 'A').forEach(r => {
+      const q = checkRankQualification(node, r);
+      if (!q) return;
+      qualRows += '<tr><td class="left">' + r + '</td>'
+        + '<td class="center">' + qualBadge(q.ppvOk) + '</td>'
+        + '<td class="center">' + qualBadge(q.dpvOk) + ' <span style="color:#999;">(' + Math.round(q.qualifyingDpv).toLocaleString() + '/' + q.req.dpv.toLocaleString() + ')</span></td>'
+        + '<td class="center">' + qualBadge(q.legOk) + '</td>'
+        + '<td class="center">' + (q.req.orgPts!=null ? qualBadge(q.orgOk) + ' <span style="color:#999;">(' + q.req.orgText + ')</span>' : '-') + '</td>'
+        + '<td class="center">' + qualBadge(q.allOk) + '</td></tr>';
+    });
+    parts.push('<div class="bonus-card"><h3>직급별 자격요건 체크</h3>'
+      + '<table class="bonus-table"><tr><th class="left">직급</th><th>PPV(150)</th><th>DPV(최대레그 상한 반영)</th><th>액티브레그</th><th>최소하위조직</th><th>종합</th></tr>'
+      + qualRows + '</table>'
+      + '<div class="hint" style="margin-top:8px;">액티브레그·리더레그포인트는 파일에 있는 값을 그대로 사용합니다. 열이 없으면 "확인불가"로 표시됩니다.</div></div>');
+
+    // ---- unilevel bonus ----
+    const uni = computeUnilevelBonus(node, simRank);
+    let uniRows = '';
+    if (uni.eligible){
+      uni.byLevel.forEach(d => {
+        uniRows += '<tr><td class="center">' + d.level + '단계</td><td>' + Math.round(d.cv).toLocaleString() + '</td><td class="center">' + (d.pct!=null?d.pct+'%':'-') + '</td><td>' + Math.round(d.amt).toLocaleString() + '원</td></tr>';
+      });
+    }
+    parts.push('<div class="bonus-card"><h3>유니레벨 보너스 (직급: ' + simRank + ' 기준)</h3>'
+      + (uni.eligible
+        ? '<div class="amount">' + fmtWon(uni.total) + '</div><table class="bonus-table"><tr><th>단계</th><th>CV 합계</th><th>요율</th><th>금액</th></tr>' + uniRows + '</table>'
+          + '<div class="hint" style="margin-top:8px;">CV = PPV × 1,550 × 0.7 ÷ 1.1. 150PPV 미만 하위 조직원은 압축되어 상위 세대의 단계로 합산됩니다.</div>'
+        : '<div class="hint">' + simRank + ' 직급은 유니레벨 보너스 테이블에 없습니다 (SA 이상부터 지급).</div>')
+      + '</div>');
+
+    // ---- mentor bonus ----
+    const mentor = computeMentorBonus(node);
+    let mentorRows = mentor.detail.map(d => '<tr><td class="left">' + d.name + ' (' + d.memno + ')</td><td class="center">' + d.rank + '</td><td>' + d.amt.toLocaleString() + '원</td></tr>').join('');
+    parts.push('<div class="bonus-card"><h3>멘토 보너스</h3>'
+      + (mentor.hasReferData
+        ? '<div class="amount">' + fmtWon(mentor.total) + '</div>'
+          + (mentor.detail.length ? '<table class="bonus-table"><tr><th class="left">직접 추천 회원</th><th>직급</th><th>금액</th></tr>' + mentorRows + '</table>'
+             : '<div class="hint">GA 이상 달성한 직접 추천 회원이 없습니다.</div>')
+          + '<div class="hint" style="margin-top:8px;">추천인 본인 직급(' + node.rank + ')보다 하위가 더 높은 직급을 달성해도, 지급액은 추천인 본인 직급 기준으로 제한됩니다.</div>'
+        : '<div class="hint">이 파일에는 "추천인회원번호" 열이 없어 멘토 보너스를 계산할 수 없습니다.</div>')
+      + '</div>');
+
+    // ---- business dev bonus (둘 다 충족해도 더 큰 금액만 지급) ----
+    const biz = computeBizDevBonus(node);
+    const bizAmount = biz.available ? (biz.biz2 ? 200000 : (biz.biz1 ? 80000 : 0)) : 0;
+    parts.push('<div class="bonus-card"><h3>비즈니스 개발 보너스</h3>'
+      + (biz.available
+        ? '<table class="bonus-table"><tr><th class="left">항목</th><th>조건</th><th>충족여부</th><th>월 보너스</th></tr>'
+          + '<tr><td class="left">비즈니스 I</td><td class="center">본인 500PPV + 직접추천 2명 이상 500PPV</td><td class="center">' + qualBadge(biz.biz1) + '</td><td>' + (biz.biz1?'80,000원':'-') + '</td></tr>'
+          + '<tr><td class="left">비즈니스 II</td><td class="center">본인 500PPV + 직접추천 4명 이상 500PPV</td><td class="center">' + qualBadge(biz.biz2) + '</td><td>' + (biz.biz2?'200,000원':'-') + '</td></tr>'
+          + '</table><div class="amount" style="font-size:18px;margin-top:8px;">지급액: ' + fmtWon(bizAmount) + '</div>'
+          + '<div class="hint" style="margin-top:6px;">두 조건을 모두 충족해도 더 큰 금액 하나만 지급됩니다. 현재 500PPV 이상 직접추천 인원: ' + biz.qualifyingCount + '명' + (biz.qualifyingNames.length? ' (' + biz.qualifyingNames.join(', ') + ')' : '') + '</div>'
+        : '<div class="hint">이 파일에는 "추천인회원번호" 열이 없어 비즈니스 개발 보너스를 계산할 수 없습니다.</div>')
+      + '</div>');
+
+    // ---- infinite bonus ----
+    const inf = computeInfiniteBonus(node, simRank);
+    parts.push('<div class="bonus-card"><h3>인피니트 보너스 (직급: ' + simRank + ' 기준)</h3>'
+      + (inf.eligible
+        ? '<div class="amount">' + fmtWon(inf.amount) + '</div>'
+          + '<div class="hint" style="margin-top:8px;">메인레그: <b>' + inf.mainLegName + '</b> (제외 대상). 나머지 레그의 8단계 이하 CV 합계 ' + Math.round(inf.cvSum).toLocaleString() + ' × 0.5% = ' + fmtWon(inf.amount) + '. (해당 인원 ' + inf.itemCount + '명)</div>'
+        : '<div class="hint">PD 이상 직급부터 지급됩니다 (현재 시뮬레이션 직급: ' + simRank + ').</div>')
+      + '</div>');
+
+    // ---- rankup bonus ----
+    const ru = computeRankupBonus(node);
+    parts.push('<div class="bonus-card"><h3>랭크업 보너스 (추정)</h3>'
+      + (ru.available
+        ? (ru.table
+            ? (ru.justAchieved
+                ? '<div class="amount">' + fmtWon(ru.table.p1) + ' (1차분)</div><div class="hint">이번 달(' + node.perfMonth + ')에 커리어 최고직급 ' + ru.rank + '을(를) 처음 달성한 것으로 추정됩니다. 1차 보너스가 지급 대상일 수 있습니다. 2차(유자격 달성 시)·3차(6개월 유지 시) 보너스는 이후 달 데이터가 있어야 확인 가능합니다.</div>'
+                : '<div class="hint">이번 달에 새로 달성한 최고직급이 아닌 것으로 보입니다 (최고직급 달성월: ' + node.careerHighMonth + ', 이번 실적월: ' + node.perfMonth + '). 랭크업 보너스 대상 아님.</div>')
+            : '<div class="hint">최고직급(' + (node.careerHighRank||'-') + ')이 GED 미만이라 랭크업 보너스 대상이 아닙니다 (GED부터 지급).</div>')
+        : '<div class="hint">이 파일에는 "최고직급"/"최고직급 달성월"/"실적월" 열이 모두 있어야 추정할 수 있습니다.</div>')
+      + '</div>');
+
+    // ---- global pool ----
+    const gp = computeGlobalPoolStatus(simRank);
+    parts.push('<div class="bonus-card"><h3>글로벌 풀 보너스 (직급: ' + simRank + ' 기준)</h3>'
+      + '<div>자격 조건(BPD 이상): ' + qualBadge(gp.qualifies) + (gp.qualifies ? ' &nbsp; <span class="amount" style="font-size:18px;">' + fmtWon(gp.amount) + '</span>' : '') + '</div>'
+      + '<div class="hint" style="margin-top:8px;">편의상 BPD 지분(0.5) = 900,000원 기준으로 지분표(BPD 0.5 · SPD 1 · GPD 1.5 · PPD 2 · 1★PPD 2.5 · 2★PPD 3 · 3★PPD 3.5 · 4★PPD 4 · CPA 5)에 비례 환산한 금액입니다. 실제로는 전세계 매출의 1.5%를 나누는 방식이라 회사 발표 금액과 다를 수 있습니다. "6개월 내 3회 이상 BPD 이상 유지" 조건도 이 스냅샷만으로는 확인할 수 없습니다.</div></div>');
+
+    // ---- leadership check match ----
+    const lcm = computeLeadershipCheckMatch(node, simRank);
+    let lcmBody;
+    if (!lcm.eligible){
+      lcmBody = '<div class="hint">SED 이상 직급이어야 리더십 체크 매치 대상입니다 (현재 시뮬레이션 직급: ' + simRank + ').</div>';
+    } else if (lcm.leaderCount === 0){
+      lcmBody = '<div class="hint">하위 조직에 SED 이상 직급자가 없습니다.</div>';
+    } else {
+      let legRows = '';
+      lcm.byLeg.forEach(leg => {
+        legRows += '<tr><td class="left" colspan="6" style="background:#f7f8fa;font-weight:700;">' + leg.legName + ' 레그 — 소계 ' + Math.round(leg.cappedSum).toLocaleString() + '원'
+          + (leg.sum > leg.cappedSum ? ' <span style="color:#b3271f;font-weight:400;">(레그 상한 적용됨)</span>' : '') + '</td></tr>';
+        leg.items.forEach(p => {
+          legRows += '<tr><td class="left">　' + p.name + ' (' + p.memno + ')</td><td class="center">' + p.rank + '</td><td class="center">' + p.gen + '세대</td>'
+            + '<td>' + Math.round(p.base).toLocaleString() + '원</td><td class="center">' + p.pct + '%</td><td>' + Math.round(p.capped).toLocaleString() + '원</td></tr>';
+        });
+      });
+      lcmBody = '<div class="amount">' + fmtWon(lcm.total) + '</div>'
+        + '<table class="bonus-table"><tr><th class="left">리더</th><th>직급</th><th>세대</th><th>유니레벨+인피니트 합</th><th>매칭율</th><th>매칭 금액</th></tr>' + legRows + '</table>'
+        + '<div class="hint" style="margin-top:8px;">"유니레벨 보너스 + 인피니트 보너스" 합계를 기준 금액으로 사용해 계산한 간이 추정치입니다. 리더별 상한선과 레그별 소득상한금액을 모두 적용했습니다. 실제 회사 정산액과 차이가 날 수 있습니다.</div>';
+    }
+    parts.push('<div class="bonus-card"><h3>리더십 체크 매치 (간이 추정)</h3>' + lcmBody + '</div>');
+
+    // ---- total (only reliably-computed items) ----
+    const total = uni.total + mentor.total + bizAmount + (inf.eligible ? inf.amount : 0) + gp.amount + (lcm.eligible ? lcm.total : 0);
+    parts.unshift('<div class="bonus-total-card"><div class="label">이번 달 예상 보너스 합계 (유니레벨 + 멘토 + 비즈니스 개발 + 인피니트 + 글로벌풀 + 리더십체크매치, 직급 ' + simRank + ' 가정)</div><div class="amount">' + fmtWon(total) + '</div></div>');
+
+    bonusResultsWrap.innerHTML = parts.join('');
+  }
+
+  bonusCalcBtn.addEventListener('click', function(){
+    const memno = bonusMemberInput.value.trim();
+    const node = allNodes[memno];
+    if (!node){
+      bonusStatusEl.className = 'show err'; bonusStatusEl.textContent = '회원번호를 찾을 수 없습니다: ' + memno;
+      return;
+    }
+    bonusStatusEl.className = '';
+    const simRank = bonusRankSelect.value || toDisplayRank(node.achievableRank) || toDisplayRank(node.rank) || 'A';
+    bonusEmptyState.style.display = 'none';
+    bonusResultsWrap.style.display = 'block';
+    renderBonusResults(node, simRank);
   });
 
 })();
