@@ -322,7 +322,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
         <div class="lg-row"><span class="swatch" style="background:var(--red)"></span> 직급</div>
         <div class="lg-row"><span class="swatch" style="background:var(--pink)"></span> DPV차이 (DPV－메인레그DPV)</div>
         <div class="hint" style="margin-top:4px;">박스를 클릭하면 그 사람을 최상위로 다시 그립니다. 선 위의 동그라미(●)를 클릭하면 하위 조직을 접거나 펼칩니다.</div>
-        <div class="hint" style="margin-top:10px; opacity:.6;">빌드: 2026-08-28-e (리더십 체크 매치 ED 세대 롤업 반영)</div>
+        <div class="hint" style="margin-top:10px; opacity:.6;">빌드: 2026-08-28-f (유니레벨 보너스 93% 보정계수 적용)</div>
       </div>
     </div>
     </div>
@@ -346,7 +346,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       <hr class="sep">
       <div class="section">
         <div class="section-title">CV 환산 기준</div>
-        <div class="bonus-note">CV = PPV × 1,550 × 0.7 ÷ 1.1<br>(사용자 제공 환산식)</div>
+        <div class="bonus-note">CV = PPV × 1,550 × 0.7 ÷ 1.1<br>(사용자 제공 환산식)<br>유니레벨 보너스는 커스텀팩 50% CV 반영을 근사하기 위해 계산값의 93%만 적용합니다.</div>
       </div>
       <hr class="sep">
       <div class="section">
@@ -1206,6 +1206,9 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
   function cvOf(ppv){ return (ppv||0) * 1550 * 0.7 / 1.1; }
   function fmtWon(v){ return Math.round(v).toLocaleString('ko-KR') + '원'; }
+  // 커스텀팩 구매분은 CV가 정상치의 50%만 인정되지만, 데이터만으로는 어떤 주문이 커스텀팩인지 구분할 근거가 없다.
+  // 사용자 요청에 따라 유니레벨 보너스 계산값 전체에 93% 보정계수를 적용해 이 효과를 근사한다.
+  const UNILEVEL_CORRECTION_FACTOR = 0.93;
 
   function initBonusTab(){
     bonusRankSelect.innerHTML = '';
@@ -1288,11 +1291,11 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     let total = 0;
     const detail = byLevel.map((cv,i) => {
       const pct = row[i];
-      const amt = pct ? cv * pct/100 : 0;
+      const amt = pct ? cv * pct/100 * UNILEVEL_CORRECTION_FACTOR : 0;
       total += amt;
       return {level:i+1, cv, pct, amt};
     });
-    return {total, byLevel: detail, eligible:true};
+    return {total, byLevel: detail, eligible:true, correctionFactor: UNILEVEL_CORRECTION_FACTOR};
   }
 
   // ---- 인피니트 보너스 (사용자 정의: PD 이상 달성자가, 메인레그를 제외한 나머지 레그의 8단계 이하 실적의 0.5%를 수령) ----
@@ -1510,7 +1513,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       parts.push('<div class="bonus-card"><h3>유니레벨 보너스 (직급: ' + simRank + ' 기준)</h3>'
         + (uni.eligible
           ? '<div class="amount">' + fmtWon(uni.total) + '</div><table class="bonus-table"><tr><th>단계</th><th>CV 합계</th><th>요율</th><th>금액</th></tr>' + uniRows + '</table>'
-            + '<div class="hint" style="margin-top:8px;">CV = PPV × 1,550 × 0.7 ÷ 1.1. 150PPV 미만 하위 조직원은 압축되어 상위 세대의 단계로 합산됩니다.</div>'
+            + '<div class="hint" style="margin-top:8px;">CV = PPV × 1,550 × 0.7 ÷ 1.1. 150PPV 미만 하위 조직원은 압축되어 상위 세대의 단계로 합산됩니다. 커스텀팩 구매분은 CV가 50%만 인정되지만 데이터로는 구분이 안 되어, 전체 계산값에 93% 보정계수를 적용했습니다 (아래 단계별 금액에 이미 반영됨).</div>'
           : '<div class="hint">' + simRank + ' 직급은 유니레벨 보너스 테이블에 없습니다 (SA 이상부터 지급).</div>')
         + '</div>');
     });
