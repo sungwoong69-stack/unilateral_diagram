@@ -322,7 +322,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
         <div class="lg-row"><span class="swatch" style="background:var(--red)"></span> 직급</div>
         <div class="lg-row"><span class="swatch" style="background:var(--pink)"></span> DPV차이 (DPV－메인레그DPV)</div>
         <div class="hint" style="margin-top:4px;">박스를 클릭하면 그 사람을 최상위로 다시 그립니다. 선 위의 동그라미(●)를 클릭하면 하위 조직을 접거나 펼칩니다.</div>
-        <div class="hint" style="margin-top:10px; opacity:.6;">빌드: 2026-08-28-f (유니레벨 보너스 93% 보정계수 적용)</div>
+        <div class="hint" style="margin-top:10px; opacity:.6;">빌드: 2026-08-28-i (SED 없이 ED만 있는 레그는 ED를 1세대로 포함)</div>
       </div>
     </div>
     </div>
@@ -331,9 +331,10 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       <div class="section">
         <div class="section-title">2. 계산 대상</div>
         <div class="bonus-field">
-          <label for="bonusMemberInput">회원번호</label>
-          <input type="text" id="bonusMemberInput" placeholder="예: 3535277">
-          <div class="hint">이 회원을 기준으로 유니레벨/멘토/비즈니스 개발 보너스를 예측합니다.</div>
+          <label for="bonusMemberInput">회원번호 또는 이름</label>
+          <input type="text" id="bonusMemberInput" list="bonusMemberList" placeholder="예: 3535277 또는 박수빈">
+          <datalist id="bonusMemberList"></datalist>
+          <div class="hint">이 회원을 기준으로 유니레벨/멘토/비즈니스 개발 보너스를 예측합니다. 이름 입력 시 자동완성 목록에서 정확한 대상을 골라주세요 (동명이인이 있을 수 있습니다).</div>
         </div>
         <div class="bonus-field">
           <label for="bonusRankSelect">직급 (시뮬레이션)</label>
@@ -448,6 +449,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   const mainTree = document.getElementById('mainTree');
   const mainBonus = document.getElementById('mainBonus');
   const bonusMemberInput = document.getElementById('bonusMemberInput');
+  const bonusMemberList = document.getElementById('bonusMemberList');
   const bonusRankSelect = document.getElementById('bonusRankSelect');
   const bonusCalcBtn = document.getElementById('bonusCalcBtn');
   const bonusStatusEl = document.getElementById('bonusStatus');
@@ -479,7 +481,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   const OPTIONAL_FIELD_ALIASES = {
     referNo:['추천인회원번호'], activeLegs:['액티브레그수'], leaderLegPts:['리더레그포인트'],
     achievableRank:['달성가능직급'], qualifiedRank:['유자격직급'],
-    careerHighRank:['최고직급'], careerHighMonth:['최고직급달성월'], perfMonth:['실적월']
+    careerHighRank:['최고직급'], careerHighMonth:['최고직급달성월'], perfMonth:['실적월'],
+    memberType:['유형']
   };
   function detectColumns(header){
     const normed = header.map(norm); const map = {};
@@ -538,7 +541,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
             qualifiedRank: hasCol('qualifiedRank') ? r[map.qualifiedRank] : null,
             careerHighRank: hasCol('careerHighRank') ? r[map.careerHighRank] : null,
             careerHighMonth: hasCol('careerHighMonth') ? r[map.careerHighMonth] : null,
-            perfMonth: hasCol('perfMonth') ? String(r[map.perfMonth]).trim() : null
+            perfMonth: hasCol('perfMonth') ? String(r[map.perfMonth]).trim() : null,
+            memberType: hasCol('memberType') ? r[map.memberType] : null
           };
           rawRowsByMemno[memno] = r;
         }
@@ -1216,14 +1220,40 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       const opt = document.createElement('option'); opt.value = r; opt.textContent = r;
       bonusRankSelect.appendChild(opt);
     });
+    bonusMemberList.innerHTML = '';
+    Object.values(allNodes).forEach(n => {
+      const opt = document.createElement('option');
+      opt.value = n.name + ' (' + n.memno + ')';
+      bonusMemberList.appendChild(opt);
+    });
     bonusCalcBtn.disabled = false;
   }
+  // resolves the "회원번호 또는 이름" input to a single node, or reports why it couldn't
+  function resolveBonusMember(raw){
+    const input = raw.trim();
+    if (!input) return {error: '회원번호 또는 이름을 입력해주세요.'};
+    const withMemnoSuffix = input.match(/\(([^()]+)\)\s*$/); // picked from the datalist: "이름 (회원번호)"
+    if (withMemnoSuffix && allNodes[withMemnoSuffix[1]]) return {node: allNodes[withMemnoSuffix[1]]};
+    if (allNodes[input]) return {node: allNodes[input]};
+    const all = Object.values(allNodes);
+    const exact = all.filter(n => n.name === input);
+    if (exact.length === 1) return {node: exact[0]};
+    if (exact.length > 1) return {error: '이름이 같은 회원이 ' + exact.length + '명 있습니다. 자동완성 목록에서 회원번호까지 선택해주세요.', candidates: exact};
+    const partial = all.filter(n => n.name && n.name.includes(input));
+    if (partial.length === 1) return {node: partial[0]};
+    if (partial.length > 1) return {error: '"' + input + '"을(를) 포함하는 회원이 ' + partial.length + '명 있습니다. 자동완성 목록에서 정확한 대상을 선택해주세요.', candidates: partial};
+    return {error: '회원번호 또는 이름 "' + input + '"을(를) 찾을 수 없습니다.'};
+  }
   bonusMemberInput.addEventListener('input', function(){
-    const n = allNodes[bonusMemberInput.value.trim()];
+    const result = resolveBonusMember(bonusMemberInput.value);
+    const n = result.node;
     if (n && n.achievableRank){
       const disp = toDisplayRank(n.achievableRank);
       if (RANK_LOOKUP[normRank(disp)]) bonusRankSelect.value = disp;
     }
+  });
+  bonusMemberInput.addEventListener('keydown', function(ev){
+    if (ev.key === 'Enter' && !bonusCalcBtn.disabled) bonusCalcBtn.click();
   });
 
   function checkRankQualification(node, rankKey){
@@ -1335,10 +1365,15 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     return {total, detail, hasReferData: !!colMap && hasCol('referNo')};
   }
 
+  // 우대고객(PC)은 데이터상 유형='우대고객' 또는 직급='PC'로 나타난다 (동일 인원 표시). 어소시에이트만 대상으로 한다.
+  function isAssociateMember(n){
+    if (n.memberType != null && n.memberType !== '') return n.memberType === '어소시에이트';
+    return toDisplayRank(n.rank) !== 'PC'; // 유형 열이 없을 때의 대체 판정
+  }
   function computeBizDevBonus(root){
     if (!colMap || !hasCol('referNo')) return {available:false};
-    const qualifying = root.referrals.filter(r => r.ppv >= 500);
-    const selfOk = root.ppv >= 500;
+    const selfOk = root.ppv >= 500 && isAssociateMember(root);
+    const qualifying = root.referrals.filter(r => r.ppv >= 500 && isAssociateMember(r));
     return {
       available: true, selfOk, qualifyingCount: qualifying.length,
       biz1: selfOk && qualifying.length >= 2, biz2: selfOk && qualifying.length >= 4,
@@ -1377,9 +1412,17 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
   // 세대는 SED 이상 직급 기준으로만 올라갑니다. 두 SED+ 리더 "사이"에 낀 ED는 새 세대를 만들지 않고
   // 바로 위(직전) 세대에 포함되는 리더로 함께 집계됩니다. 첫 SED+ 이전에는 세대가 시작되지 않으므로
-  // 그 전에 나오는 ED는 리더 목록에 포함하지 않습니다.
+  // 그 전에 나오는 ED는 원칙적으로 리더 목록에 포함하지 않습니다.
+  // 단, 레그 전체를 통틀어 SED 이상이 아예 존재하지 않고 ED만 있는 레그는 예외적으로, 그 ED를 1세대로 포함시킵니다.
   function collectSedPlusLeaders(root){
     const leaders = [];
+    function subtreeHasSedPlus(n){
+      if (LCM_GEN_MARKER_SET.has(toDisplayRank(n.rank))) return true;
+      return n.children.some(subtreeHasSedPlus);
+    }
+    const legHasSed = {};
+    root.children.forEach(c => { legHasSed[c.memno] = subtreeHasSedPlus(c); });
+
     function walk(node, gen, legRoot){
       for (const child of node.children){
         const childLegRoot = legRoot || child.memno;
@@ -1389,8 +1432,16 @@ https://github.com/nodeca/pako/blob/main/LICENSE
           if (childGen <= 6) leaders.push({node:child, rank:disp, gen:childGen, legRoot:childLegRoot, rolledUp:false});
           walk(child, childGen, childLegRoot);
         } else if (disp === LCM_ROLLUP_RANK){
-          if (gen >= 1 && gen <= 6) leaders.push({node:child, rank:disp, gen:gen, legRoot:childLegRoot, rolledUp:true});
-          walk(child, gen, childLegRoot); // ED doesn't advance the generation counter
+          if (gen >= 1){
+            if (gen <= 6) leaders.push({node:child, rank:disp, gen:gen, legRoot:childLegRoot, rolledUp:true});
+            walk(child, gen, childLegRoot); // ED doesn't advance the generation counter
+          } else if (!legHasSed[childLegRoot]){
+            // this leg has no SED+ at all: treat this ED as the leg's 1세대, and keep that generation for its descendants
+            leaders.push({node:child, rank:disp, gen:1, legRoot:childLegRoot, rolledUp:true, noSedLeg:true});
+            walk(child, 1, childLegRoot);
+          } else {
+            walk(child, gen, childLegRoot); // leg does have an SED+ elsewhere, generation just hasn't started on this path yet
+          }
         } else {
           walk(child, gen, childLegRoot);
         }
@@ -1540,11 +1591,12 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       bizAmount = biz.available ? (biz.biz2 ? 200000 : (biz.biz1 ? 80000 : 0)) : 0;
       parts.push('<div class="bonus-card"><h3>비즈니스 개발 보너스</h3>'
         + (biz.available
-          ? '<table class="bonus-table"><tr><th class="left">항목</th><th>조건</th><th>충족여부</th><th>월 보너스</th></tr>'
-            + '<tr><td class="left">비즈니스 I</td><td class="center">본인 500PPV + 직접추천 2명 이상 500PPV</td><td class="center">' + qualBadge(biz.biz1) + '</td><td>' + (biz.biz1?'80,000원':'-') + '</td></tr>'
-            + '<tr><td class="left">비즈니스 II</td><td class="center">본인 500PPV + 직접추천 4명 이상 500PPV</td><td class="center">' + qualBadge(biz.biz2) + '</td><td>' + (biz.biz2?'200,000원':'-') + '</td></tr>'
+          ? '<div style="margin-bottom:8px;">본인 500PPV 이상: ' + qualBadge(biz.selfOk) + ' <span style="color:#999;font-size:11px;">(' + node.ppv.toLocaleString() + ' / 500)</span></div>'
+            + '<table class="bonus-table"><tr><th class="left">항목</th><th>조건</th><th>충족여부</th><th>월 보너스</th></tr>'
+            + '<tr><td class="left">비즈니스 I</td><td class="center">본인 500PPV + 직접추천(어소시에이트) 2명 이상 500PPV</td><td class="center">' + qualBadge(biz.biz1) + '</td><td>' + (biz.biz1?'80,000원':'-') + '</td></tr>'
+            + '<tr><td class="left">비즈니스 II</td><td class="center">본인 500PPV + 직접추천(어소시에이트) 4명 이상 500PPV</td><td class="center">' + qualBadge(biz.biz2) + '</td><td>' + (biz.biz2?'200,000원':'-') + '</td></tr>'
             + '</table><div class="amount" style="font-size:18px;margin-top:8px;">지급액: ' + fmtWon(bizAmount) + '</div>'
-            + '<div class="hint" style="margin-top:6px;">두 조건을 모두 충족해도 더 큰 금액 하나만 지급됩니다. 현재 500PPV 이상 직접추천 인원: ' + biz.qualifyingCount + '명' + (biz.qualifyingNames.length? ' (' + biz.qualifyingNames.join(', ') + ')' : '') + '</div>'
+            + '<div class="hint" style="margin-top:6px;">두 조건을 모두 충족해도 더 큰 금액 하나만 지급됩니다. 우대고객(PC)은 대상에서 제외하고 어소시에이트만 집계합니다. 현재 500PPV 이상 직접추천 어소시에이트: ' + biz.qualifyingCount + '명' + (biz.qualifyingNames.length? ' (' + biz.qualifyingNames.join(', ') + ')' : '') + '</div>'
           : '<div class="hint">이 파일에는 "추천인회원번호" 열이 없어 비즈니스 개발 보너스를 계산할 수 없습니다.</div>')
         + '</div>');
     });
@@ -1618,12 +1670,13 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   }
 
   bonusCalcBtn.addEventListener('click', function(){
-    const memno = bonusMemberInput.value.trim();
-    const node = allNodes[memno];
-    if (!node){
-      bonusStatusEl.className = 'show err'; bonusStatusEl.textContent = '회원번호를 찾을 수 없습니다: ' + memno;
+    const result = resolveBonusMember(bonusMemberInput.value);
+    if (!result.node){
+      bonusStatusEl.className = 'show err';
+      bonusStatusEl.textContent = result.error + (result.candidates ? ' (' + result.candidates.map(c => c.name + ' (' + c.memno + ')').join(', ') + ')' : '');
       return;
     }
+    const node = result.node;
     bonusStatusEl.className = '';
     const simRank = bonusRankSelect.value || toDisplayRank(node.achievableRank) || toDisplayRank(node.rank) || 'A';
     bonusEmptyState.style.display = 'none';
