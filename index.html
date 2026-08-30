@@ -322,7 +322,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
         <div class="lg-row"><span class="swatch" style="background:var(--red)"></span> 직급</div>
         <div class="lg-row"><span class="swatch" style="background:var(--pink)"></span> DPV차이 (DPV－메인레그DPV)</div>
         <div class="hint" style="margin-top:4px;">박스를 클릭하면 그 사람을 최상위로 다시 그립니다. 선 위의 동그라미(●)를 클릭하면 하위 조직을 접거나 펼칩니다.</div>
-        <div class="hint" style="margin-top:10px; opacity:.6;">빌드: 2026-08-28-i (SED 없이 ED만 있는 레그는 ED를 1세대로 포함)</div>
+        <div class="hint" style="margin-top:10px; opacity:.6;">빌드: 2026-08-28-j (비즈니스개발보너스 대상자 알림 추가)</div>
       </div>
     </div>
     </div>
@@ -1381,6 +1381,23 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     };
   }
 
+  // 하위 조직 전체를 훑어서: (1) 각자 직접 추천한 회원 중 500PPV 이상(어소시에이트만) 인원수를 계산하고
+  // (2) 그 인원수가 2명/4명 조건은 채웠는데 본인 PPV가 아직 500 미만이라 보너스를 놓치고 있는 사람을 찾는다.
+  function scanBizDevOpportunities(root){
+    if (!colMap || !hasCol('referNo')) return {available:false};
+    const results = [];
+    (function walk(n){
+      const qualifying = n.referrals.filter(r => r.ppv >= 500 && isAssociateMember(r));
+      const count = qualifying.length;
+      if (count >= 2 && !(n.ppv >= 500 && isAssociateMember(n))){
+        results.push({node:n, qualifyingCount:count, tier: count >= 4 ? 'II' : 'I', amount: count >= 4 ? 200000 : 80000});
+      }
+      n.children.forEach(walk);
+    })(root);
+    results.sort((a,b) => b.qualifyingCount - a.qualifyingCount);
+    return {available:true, results};
+  }
+
   function computeRankupBonus(node){
     if (!node.careerHighRank || !node.careerHighMonth || !node.perfMonth) return {available:false};
     const justAchieved = String(node.careerHighMonth).replace(/[^0-9]/g,'') === String(node.perfMonth).replace(/[^0-9]/g,'');
@@ -1599,6 +1616,31 @@ https://github.com/nodeca/pako/blob/main/LICENSE
             + '<div class="hint" style="margin-top:6px;">두 조건을 모두 충족해도 더 큰 금액 하나만 지급됩니다. 우대고객(PC)은 대상에서 제외하고 어소시에이트만 집계합니다. 현재 500PPV 이상 직접추천 어소시에이트: ' + biz.qualifyingCount + '명' + (biz.qualifyingNames.length? ' (' + biz.qualifyingNames.join(', ') + ')' : '') + '</div>'
           : '<div class="hint">이 파일에는 "추천인회원번호" 열이 없어 비즈니스 개발 보너스를 계산할 수 없습니다.</div>')
         + '</div>');
+    });
+
+    // ---- 비즈니스 개발 보너스 놓치고 있는 하위 조직원 알림 ----
+    section('비즈니스 개발 보너스 대상자 알림', () => {
+      const scan = scanBizDevOpportunities(node);
+      if (!scan.available){
+        parts.push('<div class="bonus-card"><h3>⭐ 비즈니스 개발 보너스 대상자 알림</h3><div class="hint">이 파일에는 "추천인회원번호" 열이 없어 계산할 수 없습니다.</div></div>');
+      } else if (scan.results.length){
+        const MAX_SHOW = 30;
+        const rows = scan.results.slice(0, MAX_SHOW).map(r => {
+          return '<tr><td class="left">' + r.node.name + ' (' + r.node.memno + ')</td>'
+            + '<td class="center">비즈니스 ' + r.tier + '</td>'
+            + '<td class="center">' + r.qualifyingCount + '명</td>'
+            + '<td>' + r.node.ppv.toLocaleString() + ' / 500</td>'
+            + '<td>' + fmtWon(r.amount) + '</td></tr>';
+        }).join('');
+        parts.push('<div class="bonus-card"><h3 style="color:#b3271f;">⭐ 비즈니스 개발 보너스 대상자 알림 — 본인 PPV만 채우면 되는 인원 (' + scan.results.length + '명)</h3>'
+          + '<div class="hint" style="margin-bottom:8px;">직접 추천한 어소시에이트 중 500PPV 이상인 인원 조건(2명 또는 4명)은 이미 충족했지만, 본인 PPV가 아직 500 미만이라 비즈니스 개발 보너스를 받지 못하고 있는 하위 조직원입니다.</div>'
+          + '<table class="bonus-table"><tr><th class="left">이름 (회원번호)</th><th>충족 항목</th><th>500PPV 이상 직접추천</th><th>본인 PPV</th><th>놓치고 있는 금액</th></tr>'
+          + rows + '</table>'
+          + (scan.results.length > MAX_SHOW ? '<div class="hint" style="margin-top:8px;">상위 ' + MAX_SHOW + '명만 표시했습니다 (전체 ' + scan.results.length + '명, 추천 인원수가 많은 순).</div>' : '')
+          + '</div>');
+      } else {
+        parts.push('<div class="bonus-card"><h3>✅ 비즈니스 개발 보너스 대상자 알림</h3><div class="hint">본인 PPV 부족으로 비즈니스 개발 보너스를 놓치고 있는 하위 조직원이 없습니다.</div></div>');
+      }
     });
 
     // ---- infinite bonus ----
