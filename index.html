@@ -319,10 +319,12 @@ https://github.com/nodeca/pako/blob/main/LICENSE
         <div class="lg-row"><span class="swatch" style="background:var(--grey)"></span> DPV (탈퇴 회원)</div>
         <div class="lg-row"><span class="swatch" style="background:var(--gold)"></span> PPV (개인주문 있음)</div>
         <div class="lg-row"><span class="swatch" style="background:var(--white)"></span> PPV 없음 / 이름 / 회원번호 / 추천인</div>
+        <div class="lg-row"><span class="swatch" style="background:#FFEB3B"></span> 이름 (당월 가입)</div>
+        <div class="lg-row"><span class="swatch" style="background:#87CEFA"></span> 이름 (가입 6개월 미만)</div>
         <div class="lg-row"><span class="swatch" style="background:var(--red)"></span> 직급</div>
         <div class="lg-row"><span class="swatch" style="background:var(--pink)"></span> DPV차이 (DPV－메인레그DPV)</div>
         <div class="hint" style="margin-top:4px;">박스를 클릭하면 그 사람을 최상위로 다시 그립니다. 선 위의 동그라미(●)를 클릭하면 하위 조직을 접거나 펼칩니다.</div>
-        <div class="hint" style="margin-top:10px; opacity:.6;">빌드: 2026-08-28-j (비즈니스개발보너스 대상자 알림 추가)</div>
+        <div class="hint" style="margin-top:10px; opacity:.6;">빌드: 2026-09-21 (가입일 기준 당월/6개월미만 이름칸 색상 표시)</div>
       </div>
     </div>
     </div>
@@ -482,7 +484,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     referNo:['추천인회원번호'], activeLegs:['액티브레그수'], leaderLegPts:['리더레그포인트'],
     achievableRank:['달성가능직급'], qualifiedRank:['유자격직급'],
     careerHighRank:['최고직급'], careerHighMonth:['최고직급달성월'], perfMonth:['실적월'],
-    memberType:['유형']
+    memberType:['유형'], joinDate:['가입일']
   };
   function detectColumns(header){
     const normed = header.map(norm); const map = {};
@@ -542,7 +544,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
             careerHighRank: hasCol('careerHighRank') ? r[map.careerHighRank] : null,
             careerHighMonth: hasCol('careerHighMonth') ? r[map.careerHighMonth] : null,
             perfMonth: hasCol('perfMonth') ? String(r[map.perfMonth]).trim() : null,
-            memberType: hasCol('memberType') ? r[map.memberType] : null
+            memberType: hasCol('memberType') ? r[map.memberType] : null,
+            joinDate: hasCol('joinDate') ? r[map.joinDate] : null
           };
           rawRowsByMemno[memno] = r;
         }
@@ -551,7 +554,6 @@ https://github.com/nodeca/pako/blob/main/LICENSE
           if (n.sponsor && allNodes[n.sponsor] && n.sponsor !== memno) allNodes[n.sponsor].children.push(n);
           if (n.referNo && allNodes[n.referNo] && n.referNo !== memno) allNodes[n.referNo].referrals.push(n);
         }
-        sortChildrenByMainLeg();
 
         buildRankFilterUI();
         initBonusTab();
@@ -570,23 +572,6 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     reader.onerror = function(){ setStatus('파일을 읽는 중 오류가 발생했습니다.', 'err'); };
     reader.readAsArrayBuffer(f);
   });
-
-  // 각 노드의 하위 조직(children)을 '메인레그(하위 트리 DPV 합이 가장 큰 다운라인)'가
-  // 맨 왼쪽에 오도록 정렬한다. 계보도(SVG)와 엑셀 내보내기 모두 allNodes[*].children의
-  // 배열 순서를 그대로 좌→우 배치 순서로 사용하므로, 여기서 한 번만 정렬해두면 양쪽에 반영된다.
-  function sortChildrenByMainLeg(){
-    const memo = new Map();
-    function subtreeDpvSum(n){
-      if (memo.has(n.memno)) return memo.get(n.memno);
-      let s = n.dpv || 0;
-      for (const c of n.children) s += subtreeDpvSum(c);
-      memo.set(n.memno, s);
-      return s;
-    }
-    Object.values(allNodes).forEach(n => {
-      if (n.children.length > 1) n.children.sort((a, b) => subtreeDpvSum(b) - subtreeDpvSum(a));
-    });
-  }
 
   function buildRankFilterUI(){
     const counts = {};
@@ -747,6 +732,22 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   const NUMFMT = new Intl.NumberFormat('ko-KR');
   function fmt(v){ v = Math.round(v); return v===0 ? '-' : NUMFMT.format(v); }
   function fmtPlain(v){ return NUMFMT.format(Math.round(v)); }
+  // 가입일 기준 최근 가입자 강조: 실적월(파일 기준 "당월")과 가입일을 비교한다.
+  // 가입일/실적월 열이 없으면 조용히 비활성화(null)된다.
+  const JOIN_THIS_MONTH_FILL = 'FFEB3B'; // 노란색
+  const JOIN_WITHIN_6MO_FILL = '87CEFA'; // 하늘색
+  function joinRecency(n){
+    if (!n.joinDate || !n.perfMonth) return null;
+    const jm = String(n.joinDate).match(/^(\d{4})-(\d{2})/);
+    const pm = String(n.perfMonth).match(/^(\d{4})(\d{2})$/);
+    if (!jm || !pm) return null;
+    const joinY = parseInt(jm[1],10), joinM = parseInt(jm[2],10);
+    const perfY = parseInt(pm[1],10), perfM = parseInt(pm[2],10);
+    const diff = (perfY - joinY)*12 + (perfM - joinM);
+    if (diff === 0) return 'thisMonth';
+    if (diff >= 1 && diff < 6) return 'within6';
+    return null;
+  }
   function svgEl(tag, attrs){ const el = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const k in attrs) el.setAttribute(k, attrs[k]); return el; }
 
   function layoutTree(root){
@@ -772,7 +773,9 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     const g = svgEl('g', {'data-memno': n.memno});
 
     const dpvFill = isActive ? '#92D050' : '#A6A6A6';
-    const nameRect = cellRect(x, y+ROW_H, BOX_W, ROW_H, '#FFFFFF');
+    const recency = joinRecency(n);
+    const nameFill = recency === 'thisMonth' ? '#'+JOIN_THIS_MONTH_FILL : recency === 'within6' ? '#'+JOIN_WITHIN_6MO_FILL : '#FFFFFF';
+    const nameRect = cellRect(x, y+ROW_H, BOX_W, ROW_H, nameFill);
     nameRect.classList.add('box-click');
     nameRect.addEventListener('click', function(ev){ ev.stopPropagation(); drillDown(n.memno); });
     nameRect.setAttribute('title', '클릭하면 ' + n.name + '님을 최상위로 다시 그립니다');
@@ -1090,11 +1093,13 @@ https://github.com/nodeca/pako/blob/main/LICENSE
         const c = COL_OFFSET + n.x*3;
         const isActive = n.status === '활동';
         const memAddr = wsChart.getCell(r+2, c).address;
+        const recencyXl = joinRecency(n);
+        const nameFillXl = recencyXl === 'thisMonth' ? JOIN_THIS_MONTH_FILL : recencyXl === 'within6' ? JOIN_WITHIN_6MO_FILL : 'FFFFFF';
 
         setCell(r, c, {formula:`VLOOKUP(${memAddr},${rangeRef},${colIdx1('dpv')},0)`}, {fill: isActive?'92D050':'A6A6A6', bold:true, color:'FFFFFF', align:'right', numfmt:XL_NUMFMT});
         setCell(r, c+1, {formula:`VLOOKUP(${memAddr},${rangeRef},${colIdx1('ppv')},0)`}, {fill: n.ppv>0?'FFD966':'FFFFFF', align:'right', numfmt:XL_NUMFMT_PLAIN});
 
-        setCell(r+1, c, {formula:`VLOOKUP(${memAddr},${rangeRef},${colIdx1('name')},0)`}, {fill:'FFFFFF', bold:true, size:10, align:'center'});
+        setCell(r+1, c, {formula:`VLOOKUP(${memAddr},${rangeRef},${colIdx1('name')},0)`}, {fill:nameFillXl, bold:true, size:10, align:'center'});
         wsChart.mergeCells(r+1, c, r+1, c+1);
 
         setCell(r+2, c, n.memno, {fill:'FFFFFF', color:'0070C0', align:'center'});
@@ -1497,8 +1502,9 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       const inf = computeInfiniteBonus(l.node, l.rank);
       const base = (uni.eligible ? uni.total : 0) + (inf.eligible ? inf.amount : 0);
       const raw = base * pct/100;
-      const capped = Math.min(raw, LCM_LEADER_CAP[l.rank] != null ? LCM_LEADER_CAP[l.rank] : Infinity);
-      return {name:l.node.name, memno:l.node.memno, rank:l.rank, gen:l.gen, pct, base, capped, legRoot:l.legRoot, rolledUp:l.rolledUp};
+      const leaderCapValue = LCM_LEADER_CAP[l.rank] != null ? LCM_LEADER_CAP[l.rank] : Infinity;
+      const capped = Math.min(raw, leaderCapValue);
+      return {name:l.node.name, memno:l.node.memno, rank:l.rank, gen:l.gen, pct, base, raw, capped, leaderCapValue, leaderCapHit: raw > capped, legRoot:l.legRoot, rolledUp:l.rolledUp};
     });
     const legMap = {};
     perLeader.forEach(p => { (legMap[p.legRoot] = legMap[p.legRoot]||[]).push(p); });
@@ -1510,7 +1516,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       const cappedSum = Math.min(sum, legCap);
       total += cappedSum;
       const legNode = allNodes[legRoot];
-      return {legRoot, legName: legNode ? legNode.name : legRoot, sum, cappedSum, items};
+      return {legRoot, legName: legNode ? legNode.name : legRoot, sum, cappedSum, legCap, items};
     });
     return {eligible:true, total, byLeg, leaderCount:leaders.length};
   }
@@ -1708,16 +1714,20 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       } else {
         let legRows = '';
         lcm.byLeg.forEach(leg => {
+          const legCapText = leg.legCap === Infinity ? '상한 없음' : fmtWon(leg.legCap);
           legRows += '<tr><td class="left" colspan="6" style="background:#f7f8fa;font-weight:700;">' + leg.legName + ' 레그 — 소계 ' + Math.round(leg.cappedSum).toLocaleString() + '원'
-            + (leg.sum > leg.cappedSum ? ' <span style="color:#b3271f;font-weight:400;">(레그 상한 적용됨)</span>' : '') + '</td></tr>';
+            + ' <span style="color:#999;font-weight:400;font-size:11px;">(레그별 소득상한 ' + legCapText + ', 직급 ' + simRank + ' 기준)</span>'
+            + (leg.sum > leg.cappedSum ? ' <span style="color:#b3271f;font-weight:400;">— 레그 상한 적용됨 (원래 ' + Math.round(leg.sum).toLocaleString() + '원)</span>' : '') + '</td></tr>';
           leg.items.forEach(p => {
+            const leaderCapText = p.leaderCapValue === Infinity ? '-' : fmtWon(p.leaderCapValue);
             legRows += '<tr><td class="left">　' + p.name + ' (' + p.memno + ')</td><td class="center">' + p.rank + '</td><td class="center">' + p.gen + '세대' + (p.rolledUp ? ' <span style="color:#999;">(롤업)</span>' : '') + '</td>'
-              + '<td>' + Math.round(p.base).toLocaleString() + '원</td><td class="center">' + p.pct + '%</td><td>' + Math.round(p.capped).toLocaleString() + '원</td></tr>';
+              + '<td>' + Math.round(p.base).toLocaleString() + '원</td><td class="center">' + p.pct + '%</td>'
+              + '<td>' + Math.round(p.capped).toLocaleString() + '원' + (p.leaderCapHit ? ' <span style="color:#b3271f;font-size:10.5px;">(리더상한 ' + leaderCapText + ' 적용, 원래 ' + Math.round(p.raw).toLocaleString() + '원)</span>' : '') + '</td></tr>';
           });
         });
         lcmBody = '<div class="amount">' + fmtWon(lcm.total) + '</div>'
-          + '<table class="bonus-table"><tr><th class="left">리더</th><th>직급</th><th>세대</th><th>유니레벨+인피니트 합</th><th>매칭율</th><th>매칭 금액</th></tr>' + legRows + '</table>'
-          + '<div class="hint" style="margin-top:8px;">"유니레벨 보너스 + 인피니트 보너스" 합계를 기준 금액으로 사용해 계산한 간이 추정치입니다. 세대는 SED 이상 직급 기준으로 올라가며, 두 SED 이상 리더 사이에 낀 ED는 새 세대를 만들지 않고 바로 위 세대(롤업)로 함께 집계됩니다. 리더별 상한선(ED는 PDF에 값이 없어 SED의 절반인 12.5만원으로 편의상 추정)과 레그별 소득상한금액을 모두 적용했습니다. 실제 회사 정산액과 차이가 날 수 있습니다.</div>';
+          + '<table class="bonus-table"><tr><th class="left">리더</th><th>직급</th><th>세대</th><th>유니레벨+인피니트 합</th><th>매칭율</th><th>매칭 금액 (리더상한 적용)</th></tr>' + legRows + '</table>'
+          + '<div class="hint" style="margin-top:8px;">"유니레벨 보너스 + 인피니트 보너스" 합계를 기준 금액으로 사용해 계산한 간이 추정치입니다. 세대는 SED 이상 직급 기준으로 올라가며, 두 SED 이상 리더 사이에 낀 ED는 새 세대를 만들지 않고 바로 위 세대(롤업)로 함께 집계됩니다(단, 레그 전체에 SED 이상이 아예 없으면 그 ED를 1세대로 봅니다). 리더별 상한선(ED는 PDF에 값이 없어 SED의 절반인 12.5만원으로 편의상 추정)과, 직급별 레그별 소득상한금액(내 직급 기준)을 모두 적용했습니다. 실제 회사 정산액과 차이가 날 수 있습니다.</div>';
       }
       parts.push('<div class="bonus-card"><h3>리더십 체크 매치 (간이 추정)</h3>' + lcmBody + '</div>');
     });
